@@ -47,7 +47,7 @@ if __name__ == "__main__":
 
     for i in range(args.checks):
         logging.info('Waiting for another check')
-        # time.sleep(wait)
+        time.sleep(wait)
         new_hash = get_page_hash(args.link)
 
         if new_hash != hashed_content:
