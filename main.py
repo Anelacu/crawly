@@ -5,11 +5,11 @@ import os
 import requests
 import time
 from datetime import datetime
-from email_service import send_email
+from email_service import send_change_email, send_reminder_email
 
 
 def get_arguments():
-    # <email> <link> optional<frequency(h)> optional<no_of_checks>
+    # <email> <link> optional<frequency(h)> optional<no_of_checks> optional<reminder(h)>
     parser = argparse.ArgumentParser(
         description='Detect changes in a web page')
     parser.add_argument('email', metavar='E', type=str, help='email to notify')
@@ -19,6 +19,8 @@ def get_arguments():
                         help='period of time between comparisons', default=12.0, nargs='?')
     parser.add_argument('checks', metavar='--c', type=int,
                         help='Number of checks before killing script', default=4, nargs='?')
+    parser.add_argument('reminder', metavar='--rm', type=float,
+                        help='Number of hours which a reminder will be sent', default=168, nargs='?')
     args = parser.parse_args()
 
     logging.info(
@@ -43,16 +45,29 @@ if __name__ == "__main__":
     args = get_arguments()
 
     wait = args.frequency * 60 * 60  # convert h to s
+    reminder_limit = args.reminder * 60 * 60  # convert h to s
+    time_since_check = 0
+
     hashed_content = get_page_hash(args.link)
 
     for i in range(args.checks):
         logging.info('Waiting for another check')
         time.sleep(wait)
+        time_since_check += wait
+
         new_hash = get_page_hash(args.link)
 
         if new_hash != hashed_content:
             logging.info(
                 f'Hashes differ, sending notification to {args.email}')
-            send_email(args.email, args.link)
+            send_change_email(args.email, args.link)
 
             hashed_content = new_hash
+            time_since_check = 0
+
+        elif time_since_check >= reminder_limit:
+            logging.info(
+                f'Reminder limit time passed, sending reminder email to {args.email}')
+            send_reminder_email(args.email, args.link)
+
+            time_since_check = 0

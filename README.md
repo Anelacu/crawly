@@ -17,10 +17,14 @@ pip install -r requirements.txt
 Then you can use the script by invoking it with
 
 ```shell
-python main.py <email> <link> <frequency> <number of checks>
+python main.py <email> <link> <frequency> <number of checks> <frequency of reminder>
 ```
 
-where `<frequency>` and `<number of checks>` are optional arguments. Frequency is a float expressing hour interval at which the website should be checked, by default it is 12h. Number of checks specifies total number of times the website will be checked, by default it is 4 times.
+where `<frequency>`, `<number of checks>` and `<frequency of reminder>` are optional arguments.
+
+- Frequency is a float expressing hour interval at which the website should be checked, by default it is 12h.
+- Number of checks specifies total number of times the website will be checked, by default it is 4 times.
+- Frequency of reminder is an float expressing hour interval at which a reminder that crawly is still working will be sent, by default it is 168h (7 days).
 
 ## Example `.env`
 
