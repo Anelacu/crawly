@@ -6,7 +6,7 @@ import requests
 import time
 from datetime import datetime
 from email_service import send_change_email, send_reminder_email
-
+from bs4 import BeautifulSoup as bs
 
 def get_arguments():
     # <email> <link> optional<frequency(h)> optional<no_of_checks> optional<reminder(h)>
@@ -30,17 +30,23 @@ def get_arguments():
 
 def get_page_html(link):
     logging.info(f'Retrieving html for {link}')
-    html = requests.get(link).content
-
+    r = requests.get(link)
+    html = r.content
+    guess_encoding = r.apparent_encoding
     logging.info(f'Successfully retrieved html for {link}')
-    return html
+    return html, guess_encoding
 
 
-def save_page(html, i):
+def save_page(html, i, encoding):
     logging.info(f'Saving html for {i}th time')
-
+    try:
+        html = html.decode(encoding)
+    except:
+        pass
+    soup = bs(html)
+    pretty = soup.prettify()
     with open(f'page/v{i}', 'w') as f:
-        f.write(html)
+        f.write(pretty)
 
 
 def get_hash(s):
@@ -63,16 +69,16 @@ if __name__ == "__main__":
     time_since_check = 0
     number_of_hashes_collected = 0
 
-    html = get_page_html(args.link)
+    html,encoding = get_page_html(args.link)
     hashed_content = get_hash(html)
-    save_page(html, number_of_hashes_collected)
+    save_page(html, number_of_hashes_collected, encoding)
 
     for i in range(args.checks):
         logging.info('Waiting for another check')
         time.sleep(wait)
         time_since_check += wait
 
-        new_html = get_page_html(args.link)
+        new_html, encoding = get_page_html(args.link)
         new_hash = get_hash(new_html)
 
         if new_hash != hashed_content:
@@ -81,7 +87,7 @@ if __name__ == "__main__":
             send_change_email(args.email, args.link)
 
             number_of_hashes_collected += 1
-            save_page(new_html, number_of_hashes_collected)
+            save_page(new_html, number_of_hashes_collected, encoding)
 
             hashed_content = new_hash
             time_since_check = 0
