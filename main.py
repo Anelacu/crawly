@@ -28,17 +28,31 @@ def get_arguments():
     return args
 
 
-def get_page_hash(link):
+def get_page_html(link):
     logging.info(f'Retrieving html for {link}')
     html = requests.get(link).content
 
-    logging.info(f'Successfully retrieved, returning hash')
-    return hashlib.md5(html).hexdigest()
+    logging.info(f'Successfully retrieved html for {link}')
+    return html
+
+
+def save_page(html, i):
+    logging.info(f'Saving html for {i}th time')
+
+    with open(f'page/v{i}', 'w') as f:
+        f.write(html)
+
+
+def get_hash(s):
+    return hashlib.md5(s).hexdigest()
 
 
 if __name__ == "__main__":
     if not os.path.exists('logs/'):
         os.makedirs('logs/')
+    if not os.path.exists('page/'):
+        os.makedirs('page/')
+
     logging.basicConfig(filename=f'logs/{datetime.now()}.log',
                         format='%(asctime)s %(message)s', datefmt='%Y-%m-%d %H:%M:%S', level=logging.INFO)
 
@@ -47,20 +61,27 @@ if __name__ == "__main__":
     wait = args.frequency * 60 * 60  # convert h to s
     reminder_limit = args.reminder * 60 * 60  # convert h to s
     time_since_check = 0
+    number_of_hashes_collected = 0
 
-    hashed_content = get_page_hash(args.link)
+    html = get_page_html(args.link)
+    hashed_content = get_hash(html)
+    save_page(html, number_of_hashes_collected)
 
     for i in range(args.checks):
         logging.info('Waiting for another check')
         time.sleep(wait)
         time_since_check += wait
 
-        new_hash = get_page_hash(args.link)
+        new_html = get_page_html(args.link)
+        new_hash = get_hash(new_html)
 
         if new_hash != hashed_content:
             logging.info(
                 f'Hashes differ, sending notification to {args.email}')
             send_change_email(args.email, args.link)
+
+            number_of_hashes_collected += 1
+            save_page(new_html, number_of_hashes_collected)
 
             hashed_content = new_hash
             time_since_check = 0
