@@ -10,16 +10,20 @@ Code adapted from https://www.tutorialspoint.com/send-mail-from-your-gmail-accou
 '''
 
 
-def send_change_email(addressTo, link):
+def send_change_email(addressTo, link, i):
     dotenv_path = join(dirname(__file__), '.env')
     load_dotenv(dotenv_path)
+    
+    f1 = "./page/v{idx}".format(idx=i)
+    f2 = "./page/v{idx}".format(idx=i-1)
+    diff = os.popen('diff {path1} {path2}'.format(path1=f1, path2=f2)).read()
 
     # The mail addresses and password
     sender_address = os.environ.get("FROM")
     sender_pass = os.environ.get("PASS")
     receiver_address = addressTo
 
-    mail_content = f'A change has been detected on {link}'
+    mail_content = f'A change has been detected on {link}\n\n\n {diff}'
 
     # Setup the MIME
     message = MIMEMultipart()

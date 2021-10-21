@@ -84,10 +84,10 @@ if __name__ == "__main__":
         if new_hash != hashed_content:
             logging.info(
                 f'Hashes differ, sending notification to {args.email}')
-            send_change_email(args.email, args.link)
 
             number_of_hashes_collected += 1
             save_page(new_html, number_of_hashes_collected, encoding)
+            send_change_email(args.email, args.link, number_of_hashes_collected)
 
             hashed_content = new_hash
             time_since_check = 0
